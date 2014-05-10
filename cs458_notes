@@ -1,0 +1,74 @@
+
+malicious attacker
+method: the skills, knowledge tools, other things with which to be able to pull off the attack
+opportunity: the time and access to accomplish the attack
+motive: a reason to want to perform this attack 
+
+System security threats
+- interception
+- interruption
+- modification
+- fabrication
+
+CIA
+Confidentiality
+Integrity
+Availability
+
+Vulnerbilities
+- hardware, software, data
+
+Principle of easiest penetration
+principle of adequte protection -- computer items must be protected until they lose values
+
+Salami attack -- performing small difficultly-detected malicious actions, resulting in great results for the attacker
+
+Network, access, key people
+
+Criminals
+- amateurs - computer professionals who has access to something valuable
+- cracker - high school, university students who seeks for access to unauthorized assets
+- career criminals - those who understand the target of the computer crimes
+- terrorists - target of attack, propaganda, method of attack
+
+
+Method of defense
+	- risk - the possibility of harm
+
+prevent it - block the attack or close the vulnerbility
+deter it - make the attack harder but not impossible
+deflect it - make another target more attractive
+detect it - as it happens or some time after the fact
+recover from its effects
+
+Controls - countermeasures
+
+Software control
+- internal program
+- operating system and network
+- independent 
+- development
+
+Hardware control
+- encryption
+- locks
+- devices that verify  users' identities
+- firewalls
+- intrusion detection systems
+- circuit boards that control access to storage media
+
+Policies and Procedures
+
+Physical controls
+- locks
+
+Awareness problem
+- people need to know why security is needed
+
+Principle of Effectiveness
+- controls must be used properly to be effective; efficient, easy-to-use, and appropriate
+
+principle of weakest link - security can be no stronger than its weakest link
+
+flaw - fault or failure
+vulnerbility - describes a class of flaws (i.e. buffer overflow)
