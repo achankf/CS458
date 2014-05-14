@@ -1,0 +1,46 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{ulem}
+\usepackage{../thm}
+\title{CS458 Section 001 Assignment 1}
+
+\begin{document}
+\maketitle
+
+\begin{enumerate}
+\item
+{\tt sploit1.c} exploits a buffer overflow vulnerbility in the {\tt copyFIle} method.
+In particular, the buffer within {\tt copyFile} is used to read the entire source file, but the buffer only has 512 bytes; thus, the source file acts as the payload in the exploit.
+
+Most of the codes are ``recycled" from ``Smashing the Stack for Fun and Profit," except that I turned the for loops into {\tt memset} and {\tt memcpy} for style purposes.
+The most important point of the codes is about finding the address of the buffer, which took me 20+ hours (a weekend) to learn GDB, to use it, and to realize what is going on behind-the-scene.
+\item
+{\tt sploit2.c} exploits a format string vulnerbility in the {\tt main} method.
+In particular, it has a {\tt printf} statement in which the format string is user-supplied.
+
+Like {\tt sploit1.c}, the payload is padded with NOP's.
+This time, however, instead of storing the payload in the input, I stored it as an environment variable.
+
+The main point of the codes is about the creation of the input string, which consists of the following (in order):
+\begin{itemize}
+\item
+An address that points to the lower 2 bytes of the return address (0xffbfdc5e).
+\item
+An address that points to the upper 2 bytes of the return address (0xffbfdc5c).
+\item
+Print 56792 characters (note: 8 characters -- the addresses -- were already printed).
+\item
+Write 0xDDE0 (56792 + 8) to the $101^{th}$ element of the stack (upper address: 0xffbfdc5c).
+\item
+Print 8671 characters.
+\item
+Write 0xFFBF (0xDDE0 + 8671) to the $100^{th}$ element of the stack (0xffbfdc5c).
+\end{itemize}
+In other words, the address of the payload (0xFFBFDDE0 -- it took me a long time, 5+ hours, to realize the importance of NOP's) is written to the return address (0xffbfdc5c).
+
+{\bf Note: when you run the {\tt sploit2.c}, you will see a failure message like "Failed to open source file:" -- this is normal because even though the return address has been hacked (so to speak), {\tt submit} still has to run the remaining of {\tt main} before returning, which does the check on the source file; hence the message appears.
+Originally, I wanted to avoid this check by creating the source file (hence I put the payload in the environment variable -- due to the file name length limit), but then I realize it is not needed.}
+\end{enumerate}
+
+
+\end{document}
