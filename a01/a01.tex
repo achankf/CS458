@@ -1,0 +1,92 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{ulem}
+\usepackage{../thm}
+\title{CS458 Section 001 Assignment 1}
+
+\begin{document}
+\maketitle
+
+\section*{Written part}
+
+\begin{enumerate}
+\item
+\begin{itemize}
+\item
+First, assume that trouble makers are being taken care by the police, so that interruption attack is impossible; also, assume that there are enough voting stations.
+
+Paper-based voting is susceptible to interception, modification, and fabrication attacks.
+
+For \emph{interception} attacks, consider the case where the attacker impersonate eligible voters, so that he/she gets multiple blank ballots.
+Impersonation is possible -- consider that the attacker steals information from eligible voters' mailbox, and then forge identification cards based on these information.
+
+For \emph{modification} and \emph{fabrication}, since only the results are submitted to the headquarters, so an evil official can either alter voters' ballot or even fabricate the result, reporting that some candidates got more votes than the actual numbers.
+\item
+For electronic voting, \emph{modification} and \emph{fabrication} can also be done with an insider official, just like paper-based voting.
+
+On the other hand, consider that \emph{interception} now is based on implanting malware to the eligible voters -- for example, by the ``dancing pig."
+Thus, the malware can intercept the authorization code, modify the candidate, send the votes to the voting server, and respond back with a fake web page.
+
+Finally, \emph{interruption} is possible.
+Consider that the attacker has created a worm that contains a logic bomb, such that it will be activated during the voting period.
+Then, if most computers on Earth is being infected by this worm, then the attacker can host a denial-of-service attack to the voting server.
+\item
+Since I see less attack opportunities for paper-based voting, so paper-based voting is more secure.
+\end{itemize}
+\done
+
+\item
+\begin{itemize}
+\item
+{\bf Assumption}
+I assume that an old credit is like my Watcard -- on the back of the card, it has a magnetic stripe and a blank place for me to sign my signature.
+In addition, the credit card has a unique identification number.
+
+{\bf Identification}
+The cashier can identify Alice as a valid credit-card holder when Alice pay with a valid credit card.
+The cashier can know whether a credit card is valid by swiping it on the credit-card machine -- the machine does the actual identification, including credit verfication.
+
+{\bf Authentication}
+Since Alice is required to sign the recipe, so the cashier can authenticate Alice by comparing her signature and the one that is on the credit card.
+If both signatures match, then the cashier knows that the credit card belongs to Alice.
+
+If both tests pass, then the cashier completes the transaction (which will be forward to a bank); otherwise, the cashier rejects the transaction.
+
+\item
+For the online version, Alice has to fill in lots of information, such as the credit card number, name, expiration date, billing address, the amount to be paid, etc. to a remote server.
+The remote server needs to be trusted by a bank.
+The request, then, will be forwarded to the bank, which does the identification and authentication.
+
+Identification is achieved by comparing meta-information (i.e. address, name, etc.) with the bank's database.
+
+Authentication is done by comparing the credit card number, which is unique and hard-to-guess.
+
+If both tests pass, then the bank will grant the credits.
+\end{itemize}
+\done
+\end{enumerate}
+
+\section*{Programming part}
+\begin{itemize}
+\item
+{\tt sploit3} exploits the off-by-one problem in {\tt usage2}, which is caused by the assignment of the null character to the index of {\tt sizeof(buffer)}, which exceeds the buffer size limit.
+It just happen that the assignment causes the return address to look for an address within the buffer.
+
+This problem is exploitable, since I can fill the $0^{th}$ argument with an arbitrarily long string for {\tt execve}.
+In our case, the string is filled with the address of the payload (shellcode).
+
+Again, the shellcode is stored as an environment variable, padded by NOP's.
+
+\item
+{\tt sploit4} exploits a TOCTOU vulnerability in {\tt logEntry}.
+This is doable because there is a time gap between authentication and the actual write, and it does not reuse the file descriptor that is openned during the authentication.
+
+{\tt sploit4} is very simple.
+It forks the process into 2 -- one process keeps running {\tt submit} and then delete the file; then other process keep creating the log file and re-linking it to the password file {\tt /etc/passwd}.
+
+If we are lucky, a user entry that is an alias of root with the password ``aaa" will be inserted to the password file.
+
+In the end, {\tt sploit4} will try to {\tt su} into {\tt root\_alias} with that password.
+The password is entered with the help of {\tt ioctl}.
+\end{itemize}
+\end{document}
