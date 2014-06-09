@@ -1,0 +1,31 @@
+First file-encrypting ransomware found on Android
+
+Recently, researchers have discovered possibly the first file-encrypting ransomware on Android, called the ``Simplocker".
+
+Why is it important?
+Since Android is a growing market, so, being fully-fucntional and is the first of its kind, it sets an example to other malware writers that ransomware is feasible on Android.
+
+Who is affected?
+Android users who use untrusted applications (i.e. apps that are not downloaded from Google Play) are particularly vulnerable to this type of attacks.
+In order for the Simplocker to be effective, it must be installed manually by the user; so it is possible that victims fell into social engineering techniques and accidentally installed the ransomware.
+
+What impact might it have?
+Like many ransomeware, the victims either pay the ransom (260 Ukrainian Hryvnia, or $21), or they may lose their files.
+In particular, the Simplocker mainly targets text, image, and video files; these files are encrypted with the AES cipher in a background thread.
+In addition, Android/Simplocker sends data to remote a server via Tor, so sensitive private data may be leaked.
+
+What were the causes?
+One of the referenced article [2] points out that the Simplocker was originated from an application called ``Sex xionix," which is not a trusted app on Google Play.
+
+How might similar problems be prevented in the future?
+In order to avoid ransomware, the solutions are to backup important files, to avoid installing untrusted apps, and to be cautious about possible social engineering traps.
+
+-------
+Note that file-encrypting ransomware is a specific type of ransomware that use encryption to hold victims files as hostages.
+The first Android ransomware, according to [4], was found in last month, which is a fake pornographic app that bricks Android phones and demands ransom, and threaten to report to the FBI for child pornography if the ransom is not being paid -- this is different from Simplocker in terms of the way in taking hostages.
+
+References:
+* http://www.scmagazine.com/androidsimplocker-could-be-the-first-android-ransomware-to-encrypt-files/article/350070/
+[2] http://www.theinquirer.net/inquirer/news/2348469/researchers-uncover-more-android-cryptolocker-style-ransomware
+* http://thehackernews.com/2014/06/first-android-ransomware-that-encrypts.html
+[4] http://www.theinquirer.net/inquirer/news/2344051/cryptolocker-ransomware-hits-android-smartphones-and-tablets-via-fake-porn-app
