@@ -7,21 +7,19 @@ use diagnostics;
 $| = 1;
 
 # ======== global variables ========
-open(FILE, "keywords.txt") or die("Unable to open keywords.txt");
-my @keywords = <FILE>;
-close(FILE);
+sub getTokens {
+	my $file = shift;
+	my @ret;
+	open(FILE, $file) or die("Unable to open $file");
+	@ret = <FILE>;
+	close(FILE);
+	chomp @ret;
+	s/\r//g for(@ret);
+	return @ret;
+}
 
-# clean up keywords
-chomp @keywords;
-s/\r//g for(@keywords);
-
-open(FILE, "domains.txt") or die("Unable to open domains.txt");
-my @domains = <FILE>;
-close(FILE);
-
-# clean up domains
-chomp(@domains);
-s/\r//g for(@domains);
+my @keywords = getTokens "keywords.txt";
+my @domains = getTokens "domains.txt";
 
 # ======== helpers ========
 
@@ -36,11 +34,6 @@ sub checkDNSLookup {
 			# get rid of anything nameserver-related
 			$line =~ s/ns:.*//;
 
-			my @bad_ip;
-			foreach my $matched ($line =~ m/A (\d+.\d+.\d+.\d+)/g) {
-				push @bad_ip, $matched;
-			}
-
 			# concat addresses in sorted order
 			$buffer .= join(", ", (sort {
 				my @a = split /\./, $a;
@@ -48,7 +41,10 @@ sub checkDNSLookup {
 				$a[0] <=> $b[0] or 
 				$a[1] <=> $b[1] or 
 				$a[2] <=> $b[2] or 
-				$a[3] <=> $b[3];} @bad_ip));
+				$a[3] <=> $b[3];} 
+				# search for addresses in the given line
+				($line =~ m/A (\d+.\d+.\d+.\d+)/g)));
+			# end of concat addresses
 
 			# print the buffer and autoflush
 			print "$buffer\n\n\n";
