@@ -51,11 +51,17 @@ my @ban_ip = (
    "74.125.226.117",
 	# p.r.im
   "54.243.190.39",
-);
-
-my @ban_ip_range = (
+	# google
+	"216[.]239[.]32[.]\\d+",
+	"64[.]244[.]160[.]\\d+",
+	"66[.]249[.]80[.]\\d+",
+	"72[.]14[.]192[.]\\d+",
+	"209[.]85[.]128[.]\\d+",
+	"65[.]102[.]\\d+[.]\\d+",
 	"74[.]125[.]\\d+[.]\\d+",
-	"216[.]239[.]32[.]\\d+/"
+	"64[.]18[.]\\d+[.]\\d+",
+	"207[.]126[.]144[.]\\d+",
+	"173[.]194[.]\\d+[.]\\d+",
 );
 
 # ======== global variables ========
@@ -77,14 +83,14 @@ my @domains = getTokens "domains.txt";
 
 # check for DNS lookup
 sub checkDNSLookup {
-	my $line = shift;
+	my $second = shift;
 	my $buffer;
 	foreach my $domain(@domains) {
-		if ($line =~ /(\d+.\d+.\d+.\d+).(\d+) >.*q: A\? $domain./) {
+		if ($second =~ /(\d+.\d+.\d+.\d+).(\d+) >.*q: A\? $domain./) {
 			$buffer = "[Censored domain name lookup]: domain:$domain, src:$1:$2, host:";
 
 			# get rid of anything nameserver-related
-			$line =~ s/ns: .*//;
+			$second =~ s/ns: .*//;
 
 			# concat addresses in sorted order
 			$buffer .= join(", ", (sort {
@@ -96,38 +102,99 @@ sub checkDNSLookup {
 				$a[3] <=> $b[3];
 			}
 			# search for addresses in the given line
-			($line =~ m/A (\d+.\d+.\d+.\d+)/g)));
+			($second =~ m/A (\d+.\d+.\d+.\d+)/g)));
 			# end of concat addresses
 
 			# print the buffer and autoflush
 			print "$buffer\n";
+			return 0;
 		}
 	}
+	return 1;
 }
 
 sub checkIP {
 	my ($second, $buffer) = @_;
 
 	for my $ip (@ban_ip) {
-		if ($second =~ /($ip)/) {
-			print "$1\n";
+		if ($second =~ /(\d+.\d+.\d+.\d+).(\d+) > ($ip)/) {
+			my $clientIP = $1;
+			my $clientPort = $2;
+			my $banIP = $3;
+			for my $domain (@domains) {
+				if ($buffer =~ /($domain)/) {
+					print "[Censored domain connection attempt]: src:$clientIP:$clientPort, host:$banIP, domain:$1\n";
+					return 0;
+				}
+			}
+		}
+	}
+	return 1;
+}
+
+sub censoredURL {
+	my $payload = shift;
+	my $buffer;
+
+	if ($payload =~ /GET[.]((\/*[-_\w]+)+)[.]/) {
+		my $request = $1;
+		my @found_words = ();
+
+		for my $keyword (@keywords) {
+			# match once
+			if ($request =~ /[-_\/]$keyword[-_\/]/) {
+				push @found_words, $keyword;
+			}
+		}
+
+		if (!@found_words) {
+			return 1;
+		}
+
+		if ($payload =~ /Host:[.](([.]*\w+)+)[.]/) {
+			my $domain = $1;
+			$buffer .= "[Censored Keyword - URL]: URL:$domain$request, keyword(s):";
+			$buffer .= join ", ", @found_words;
+			print "$buffer\n";
+			return 0;
+		}
+		return 1;
+	}
+	return 1;
+}
+
+sub censoredPayload {
+	my ($second, $payload) = @_;
+	my $buffer;
+	my @found_words;
+
+	for my $keyword (@keywords) {
+		# match once
+		if ($payload =~ /[.]$keyword[.]/) {
+			push @found_words, $keyword;
 		}
 	}
 
-	for my $range (@ban_ip_range) {
-		if ($second =~ /($range)/) {
-			print "$1\n";
-		}
+	if (!@found_words) {
+		return 1;
 	}
+
+	$second =~ /(\d+.\d+.\d+.\d+).(\d+) >/;
+	my $host = $1;
+	my $port = $2;
+
+	$buffer .= "[Censored Keyword - Payload]: src:$host:$port, keyword(s):";
+	$buffer .= join ", ", @found_words;
+	print "$buffer\n";
 }
 
 sub runAll {
-	my ($first, $second, $buffer) = @_;
-	checkDNSLookup $second;
-	checkIP $second, $buffer;
-}
-
-sub processAll {
+	my ($first, $second, $payload) = @_;
+	# only one alert per packet
+	(checkDNSLookup $second)
+		&& (checkIP $second, $payload)
+		&& (censoredURL $payload)
+		&& (censoredPayload $second, $payload);
 }
 
 # ======== ``main" runner ========
@@ -136,7 +203,7 @@ my $first;
 my $second;
 my $payload;
 
-# run runAll for each line from STDIN
+# run runAll for each second from STDIN
 while (my $line = <>) {
 
 	chomp $line;
@@ -154,7 +221,4 @@ while (my $line = <>) {
 		$first = $line;
 	}
 }
-			print "$first\n";
-			print "$second\n";
-			print "$payload\n";
-#runAll $_ for <>;
+runAll $first, $second, $payload;
