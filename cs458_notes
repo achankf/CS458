@@ -72,3 +72,8 @@ principle of weakest link - security can be no stronger than its weakest link
 
 flaw - fault or failure
 vulnerbility - describes a class of flaws (i.e. buffer overflow)
+
+Access control
+- least privilege
+- verify acceptable use
+- check every access
