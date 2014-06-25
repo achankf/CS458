@@ -78,6 +78,7 @@ sub getTokens {
 
 my @keywords = getTokens "keywords.txt";
 my @domains = getTokens "domains.txt";
+@keywords = sort @keywords;
 
 # ======== helpers ========
 
@@ -158,7 +159,6 @@ sub censoredURL {
 			print "$buffer\n";
 			return 0;
 		}
-		return 1;
 	}
 	return 1;
 }
@@ -170,7 +170,7 @@ sub censoredPayload {
 
 	for my $keyword (@keywords) {
 		# match once
-		if ($payload =~ /[.]$keyword[.]/) {
+		if ($payload =~ /[^a-zA-Z0-9]$keyword[^a-zA-Z0-9]/) {
 			push @found_words, $keyword;
 		}
 	}
