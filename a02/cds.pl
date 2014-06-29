@@ -6,13 +6,6 @@ use diagnostics;
 # Auto flush stdout at each print
 $| = 1;
 
-my %ban_ip = (
-	#Vcdquality.com
-	"208.93.110.120" => "Vcdquality.com",
-	#Securityfocus.com
-	"143.127.139.110" => "Securityfocus.com",
-);
-
 # ======== global variables ========
 sub getTokens {
 	my $file = shift;
@@ -25,63 +18,75 @@ sub getTokens {
 	return @ret;
 }
 
+sub makeHash {
+	my $file = shift;
+	my %ret;
+	open(FILE, $file) or die("Unable to open $file");
+	while (my $line = <FILE>) {
+		$line =~ /^(.*) (.*)$/;
+		$ret{$1} = $2;
+	}
+	close(FILE);
+	return %ret;
+}
+
+# given files
 my @keywords = getTokens "keywords.txt";
 my @domains = getTokens "domains.txt";
 @keywords = sort @keywords;
+
+# my own pre-generated files
+my %torRelayIPs = makeHash "tor_relay_ips.txt";
+my %banIPs = makeHash "ban_ips.txt";
 
 # ======== helpers ========
 
 # check for DNS lookup
 sub checkDNSLookup {
-	my $second = shift;
+	my ($srcIP, $srcPort, $second) = @_;
 	my $buffer;
 	foreach my $domain(@domains) {
-		if ($second =~ /(\d+.\d+.\d+.\d+).(\d+) >.*q: A\? $domain./) {
-			$buffer = "[Censored domain name lookup]: domain:$domain, src:$1:$2, IP(s):";
+		next if ($second !~ /.* >.*q: A\? $domain./);
 
-			# get rid of anything nameserver-related
-			$second =~ s/ns: .*//;
+		$buffer = "[Censored domain name lookup]: domain:$domain, src:$srcIP:$srcPort, IP(s):";
 
-			# concat addresses in sorted order
-			$buffer .= join(", ", (sort {
-				my @a = split /\./, $a;
-				my @b = split /\./, $b;
-				$a[0] <=> $b[0] or
-				$a[1] <=> $b[1] or
-				$a[2] <=> $b[2] or
-				$a[3] <=> $b[3];
-			}
-			# search for addresses in the given line
-			($second =~ m/A (\d+.\d+.\d+.\d+)/g)));
-			# end of concat addresses
+		# get rid of anything nameserver-related
+		$second =~ s/ns: .*//;
 
-			# print the buffer and autoflush
-			print "$buffer\n";
-			return 0;
+		# concat addresses in sorted order
+		$buffer .= join(", ", (sort {
+			my @a = split /\./, $a;
+			my @b = split /\./, $b;
+			$a[0] <=> $b[0] or
+			$a[1] <=> $b[1] or
+			$a[2] <=> $b[2] or
+			$a[3] <=> $b[3];
 		}
+		# search for addresses in the given line
+		($second =~ m/A (\d+.\d+.\d+.\d+)/g)));
+		# end of concat addresses
+
+		# print the buffer and autoflush
+		print "$buffer\n";
+		return 0;
 	}
 	return 1;
 }
 
 sub checkIP {
-	my ($second, $buffer) = @_;
+	my ($srcIP, $srcPort, $dstIP, $dstPort, $buffer) = @_;
 
-	if ($second =~ /(\d+.\d+.\d+.\d+).(\d+) > (\d+.\d+.\d+.\d+)/) {
-		my $clientIP = $1;
-		my $clientPort = $2;
-		my $banIP = $3;
-		for my $domain (@domains) {
-			if ($buffer =~ /[Hh][Oo][Ss][Tt]: $domain/) {
-				print "[Censored domain connection attempt]: src:$clientIP:$clientPort, host:$banIP, domain:$domain\n";
-				return 0;
-			}
+	for my $domain (@domains) {
+		if ($buffer =~ /[Hh][Oo][Ss][Tt]: $domain/) {
+			print "[Censored domain connection attempt]: src:$srcIP:$srcPort, host:$dstIP, domain:$domain\n";
+			return 0;
 		}
+	}
 
-		for my $ip (keys %ban_ip) {
-			if ($buffer =~ /[Hh][Oo][Ss][Tt]: $ip/) {
-				print "[Censored domain connection attempt]: src:$clientIP:$clientPort, host:$banIP, domain:" . $ban_ip{$ip} . "\n";
-				return 0;
-			}
+	for my $ip (keys %banIPs) {
+		if ($buffer =~ /[Hh][Oo][Ss][Tt]: $ip/) {
+			print "[Censored domain connection attempt]: src:$srcIP:$srcPort, host:$dstIP, domain:" . $banIPs{$ip} . "\n";
+			return 0;
 		}
 	}
 	return 1;
@@ -118,15 +123,9 @@ sub censoredURL {
 }
 
 sub censoredPayload {
-	my ($second, $payload) = @_;
+	my ($srcIP, $srcPort, $payload) = @_;
 	my $buffer;
 	my @found_words;
-
-	if ($second =~ /\d+.\d+.\d+.\d+.\d+ > \d+.\d+.\d+.\d+.(\d+).*A\?/) {
-		#if ($1 == 53) {
-			return 1;
-		#}
-	}
 
 	for my $keyword (@keywords) {
 		# match once
@@ -139,49 +138,71 @@ sub censoredPayload {
 		return 1;
 	}
 
-	$second =~ /(\d+.\d+.\d+.\d+).(\d+) >/;
-	my $host = $1;
-	my $port = $2;
-
-	$buffer .= "[Censored Keyword - Payload]: src:$host:$port, keyword(s):";
+	$buffer .= "[Censored Keyword - Payload]: src:$srcIP:$srcPort, keyword(s):";
 	$buffer .= join ", ", @found_words;
 	print "$buffer\n";
 }
 
 sub blockTorDownload {
-	my ($second, $payload) = @_;
-	my $buffer;
+	my ($payload) = @_;
 	my $method;
-	my $domain;
-	my $request;
+	my $address;
 
-	# avoid searching in payload if the packet is a DNS lookup
-	if ($second =~ /\d+.\d+.\d+.\d+.\d+ > \d+.\d+.\d+.\d+.(\d+).*A\?/) {
-		return 1;
-	} elsif ($payload =~ /GET ((\/*[-_.\w\d]*)*tor[._-]*browser[\w.-]*(?:exe|dmg|tar[.]xz))/) {
-		$request = $1;
+	if ($payload =~ /GET ([-\/_.\w\d]*tor[-\/_.\w\d]*browser[-\/_.\w\d]*(?:exe|dmg|tar[.]xz))/) {
+		my $domain = "";
+		my $request = "";
 		$method = "HTTP";
-		if ($payload =~ /[hH][oO][sS][tT]: (([.]*\w+)+)/) {
-			$domain = $1;
-		} else {
+		$request = $1;
+		if ($payload !~ /[hH][oO][sS][tT]: (([.]*\w+)+)/) {
 			return 1;
 		}
+		$domain = $1;
+		$address = $domain . $request;
+	} elsif ($payload =~ /rcpt\s*to:\s*<([\w\d_.-]*@[\w\d_.-]*torproject.org)>/i) {
+		$method = "SMTP";
+		$address = $1;
 	} else {
 		return 1;
 	}
 
-	print "[Tor download attempt]: Method:$method, Address:$domain$request\n";
+	print "[Tor download attempt]: Method:$method, Address:$address\n";
 	return 0;
+}
+=testcases
+blockTorDownload "rcPT To: <evil.askdf\@asd123.com.torproject.org>";
+blockTorDownload "rcPT To: <gettor\@torproject.org>";
+blockTorDownload "rcPT To: <gettor\@gettor.torproject.org>";
+=cut
+
+sub blockTorConnection {
+	my ($dstIP, $dstPort) = @_;
+	if (defined $torRelayIPs{$dstIP} && $torRelayIPs{$dstIP} == $dstPort) {
+		print "Tor connection attempt: Host:$1, Port:$torRelayIPs{$dstIP}\n";
+		return 0;
+	}
+	return 1;
 }
 
 sub runAll {
 	my ($first, $second, $payload) = @_;
-	# only one alert per packet
-	(checkDNSLookup $second)
-		&& (checkIP $second, $payload)
+	$second =~ /(\d+.\d+.\d+.\d+).(\d+) > (\d+.\d+.\d+.\d+).(\d+)/;
+	my $srcIP = $1;
+	my $srcPort = $2;
+	my $dstIP = $3;
+	my $dstPort = $4;
+
+	if ($srcPort == 53) {
+		checkDNSLookup $srcIP, $srcPort, $second;
+	} elsif ($dstPort == 53) {
+		# ignore DNS request; only handle the reply
+	} else {
+		# only one alert per packet
+		(checkIP $srcIP, $srcPort, $dstIP, $dstPort, $payload)
 		&& (censoredURL $payload)
-		&& (censoredPayload $second, $payload)
-		&& (blockTorDownload $second, $payload);
+		&& (censoredPayload $srcIP, $srcPort, $payload)
+		&& (blockTorDownload $payload)
+		&& (blockTorConnection $dstIP, $dstPort);
+	}
 }
 
 # ======== ``main" runner ========
@@ -202,17 +223,17 @@ while (my $line = <>) {
 		while ($temp =~ /([a-zA-Z0-9][a-zA-Z0-9])/g) {
 			$payload .= chr(hex($1));
 		}
-	} else {
-		if (defined $first && defined $second) {
+	} elsif ($line =~ /^[^\s]/) {
+		if (defined $first && defined $second && defined $payload) {
 			runAll $first, $second, $payload;
-#print "BEGIN======\n$payload\n";
 		}
-		$first = $line;
 		undef $second;
 		undef $payload;
+		$first = $line;
+	} else {
+		# must not reach or the input is invalid (or my understanding of the input is invalid)
 	}
 }
-if (defined $first && defined $second) {
+if (defined $first && defined $second && defined $payload) {
 	runAll $first, $second, $payload;
-#print "BEGIN======\n$payload\n";
 }
