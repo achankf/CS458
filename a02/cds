@@ -174,9 +174,12 @@ blockTorDownload "rcPT To: <gettor\@torproject.org>";
 blockTorDownload "rcPT To: <gettor\@gettor.torproject.org>";
 =cut
 
+my %detectedConnection;
 sub blockTorConnection {
 	my ($dstIP, $dstPort) = @_;
 	if (defined $torRelayIPs{$dstIP} && $torRelayIPs{$dstIP} == $dstPort) {
+		return 0 if defined $detectedConnection{$dstIP . "-" . $dstPort};
+		$detectedConnection{$dstIP . "-" . $dstPort} = 1;
 		print "Tor connection attempt: Host:$1, Port:$torRelayIPs{$dstIP}\n";
 		return 0;
 	}
