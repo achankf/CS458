@@ -1,0 +1,99 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{ulem}
+\usepackage{../thm}
+\title{CS458 Section 001 Assignment 1}
+
+\begin{document}
+\maketitle
+
+For the programming portion, please run ``make" to set the executable permission.
+
+\section*{Written part}
+\begin{enumerate}
+\item
+\begin{enumerate}
+\item
+Alice can read D102, D104, D105; and she can write to D101 and D104.
+\item
+\begin{tabular}{|c|c|c|c|}
+\hline
+Step & Alice's Integrity Level & Target Document's Integrity Level \\\hline
+i & (Secret, \{SecondCup, TimHortons\}) & (Unclassified, \{SecondCup\}) \\
+ii & (Secret, \{SecondCup, TimHortons\}) & (Secret, \{SecondCup, TimHortons\})\\
+iii & (Secret, \{SecondCup, TimHortons\}) & (Classified, \{Starbucks, TimHortons, SecondCup\})\\
+iv & (Secret, \{SecondCup, TimHortons\}) & (Secret, \{TimHortons\})\\
+v & Cannot write to a higher level doc \\
+\hline
+\end{tabular}
+In essence, notice for each case in the lattice, either the subject or object has a direct path that dominates the other one.
+\end{enumerate}
+\item
+\begin{enumerate}
+\item
+We want $P(imposter|reject)$.
+\begin{itemize}
+\item
+First, $P(reject|imposter)$ is the probability that of rejecting a request given that the person is an imposter -- this is the probability of having a true negative, which is $1 - P(\text{false negative}) = 0.97$.
+\item
+Then, $P(imposter) = 0.02$ (given).
+\item
+Then, the event of rejecting a request consists of either
+\begin{itemize}
+\item
+having true negative for the 2\% of the imposters (i.e. $0.02 \times (1-0.03) = 0.194$).
+\item
+or having false positive for the remaining 98\% of the non-imposters (i.e. $0.98 \times 0.05 = 0.049$)
+\item
+Thus, together, $P(reject) = 0.0194 + 0.049 = 0.06984$.
+\end{itemize}
+\end{itemize}
+Finally, the required $P(imposter|reject) = 0.97 * 0.02 / 0.0684 \approx 28\%$.
+\item
+Similarly, we want $P(\text{non-imposter} | accept)$.
+\begin{itemize}
+\item
+$P(\text{non-imposter}) = 1-P(imposter) = 0.98$.
+\item
+$P(accept|\text{non-imposter}) = P(\text{true postive}) = 1-P(\text{false postive}) = 1-0.05 = 0.95$
+\item
+$P(accept) = 1-P(reject) = 0.9316$
+\end{itemize}
+Thus, $P(imposter|reject) = 0.95 * 0.98 / 0.9316 = 0.999$.
+\end{enumerate}
+\item
+Consider breaking a packet into smaller sizes, so that illegal patterns will not be caught as the data were being split into many parts.
+For example, consider for the censorship detection system, the input has 2 packets and one of them contains ``cens" and the other contains "orship" -- clearly the word ``censorship" cannot be caught -- just like the CDS, a packet filtering gateway is stateless so separating the packets may bypass the filtering.
+The solution is to use a stateful inspection firewall, which combines all related packets and then does the filtering; hence, it is likely to resist the mentioned attack.
+\item
+The first case prevents man-in-the-middle attacks from an attacker within the UW network -- either you are talking to people within the network, or to people on the Internet.
+Since the source address is usually used in the reply of a request, if there is no firewall that filters invalid addresses, then the attacker can just redirect traffic to his/her remote server, which is bad.
+
+For the second case, since computers within the same network usually trust each others, so letting the outside world to spoof packets means potential attacks on private machines (ex. denial-of-service attacks).
+
+Within the same UW network, an example of spoofed traffic may be impersonating other IP addresses within the same network, which may work since the mentioned firewall only look for the pattern 129.97.x.y -- I can just set whatever values for x and y, and then bypass the firewall.
+\end{enumerate}
+
+\subsection*{Bonus Questions}
+\begin{enumerate}
+\item
+One way to distribute bridge addresses is to print them down on a piece of paper, and then send them physically to the recipients.
+Then the recipients can scan the page, and then extract the text with the helper of image-to-text conversion tools.
+\item
+When I run Tor on my local machine, with tcpdump on, I found that at the beginning of each connection, the header contains a randomly generated URL, like "www.xuslbigjau6tr.com" 
+So, in my CDS, I would do the following to detct Tor bridges:
+\begin{itemize}
+\item
+Store the packets into temporary memory
+\item
+Search for the random URL
+\item
+Query the URL over DNS
+\item
+If it's not found, then it's very likely that it's Tor
+\item
+Try to add the IP address and port number to Tor Browser and run it.
+If that address really hosts Tor, then you should be able to visit the internet; otherwise that address is not hosting Tor.
+\end{itemize}
+\end{enumerate}
+\end{document}
