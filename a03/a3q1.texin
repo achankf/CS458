@@ -1,0 +1,12 @@
+\begin{enumerate}
+\item
+The website can add additional information to the HTML file or the URL, like ``session-id=12345", timestamp, etc.
+So, when the website gets the requests, it can filter and link the user usage against its database.
+Since normal users usually only look at the graphic presentation, not the details like the source code or URL, so this is doable.
+\item
+The adversary can either set up a good quality exit node, so that the directory will rate that exit node as high quality.
+Or, he/she can hack the directory (or physically seize the machines) to get a high rating.
+In any case, as long as an exit node is set up, he/she can peek at all of the traffic in plain text.
+\item
+\item
+\end{enumerate}
