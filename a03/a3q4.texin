@@ -1,0 +1,5 @@
+\begin{enumerate}
+\item [(d)]
+Fingerprints ensure that the ciphertext is not being tempered with, which avoid possible man-in-the-middle attacks.
+In particular, Alice can be mathematically sure that the message comes from valid senders, not Mallory.
+\end{enumerate}
