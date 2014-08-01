@@ -1,0 +1,34 @@
+\begin{enumerate}
+\item
+The attack on the IV is possible because
+\begin{itemize}
+\item
+the IV is part of the user (TA) input
+\item
+the attacker knows the plain text
+\item
+but there is not way that the database can check the integrity of the IV.
+\end{itemize}
+
+First, consider the input/output of the AES cipher.
+Let $P$ be the plain text.
+Then, the input to the AES cipher is $IV \oplus P$.
+
+However, we know the plain text, so we can change the IV in a way that fools the AES cipher to decrypt the ciphertext into targeted message M=``a77chan  100 100".
+In particular, we perform a man-in-the-middle attack and send the pair $(ciphertext, IV')$ instead, where $IV'$ is the following.
+\begin{align*}
+IV' = IV \oplus P \oplus M
+\end{align*}
+According to the Wiki, the IV is applied at the end of each block.
+Let $D_k(ciphertext)$ be the output of AES under the TA's secret key (that we do not know); however, $D_k(ciphertext) = IV \oplus P$ because decryption reverse the ciphertext to the input of encryption.
+Then the output to the database is
+\begin{align*}
+D_k \oplus IV' &= (IV \oplus P) \oplus (IV \oplus P \oplus M) \\
+	&= M
+\end{align*}
+But $M$ is the message that I constructed.
+Good game.
+\item
+Integrity is violated.
+This can be fixed by appending a HMAC to it, with a different signature key.
+\end{enumerate}

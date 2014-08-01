@@ -8,5 +8,19 @@ The adversary can either set up a good quality exit node, so that the directory 
 Or, he/she can hack the directory (or physically seize the machines) to get a high rating.
 In any case, as long as an exit node is set up, he/she can peek at all of the traffic in plain text.
 \item
+Since the number of students and the number of targeted websites are small, the university can check whether Alice has made any activity on Facebook.
+For example, the university can create a dummy account on Facebook, befriend with Alice, so that each time when Alice is online, the university can see her status in the messenger within Facebook.
 \item
+There are 3 parts:
+\begin{itemize}
+\item
+On Facebook, the advertisements can have prefererence, so that the ads can be set that only Waterloo students can get the ads.
+\item
+{\bf [Rough estimate]}
+Since cookies are stored in the browser locally, so when the advertisement gets downloaded, the server can get and set a unique cookie, backed by a database, which can be used to distinguish people.
+\item
+{\bf [Exact match]}
+Since UW students very like use Learn, the same advertisement can be linked on Learn, except that this time Learn provides the user name of the student to the server as additional information for the cookie.
+Thus, with this additional information the university has full linkage for the students who access Facebook.
+\end{itemize}
 \end{enumerate}

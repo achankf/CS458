@@ -1,0 +1,20 @@
+\begin{enumerate}
+\item
+\begin{verbatim}
+-- Alice (assuming we have her account number, say ``anum")
+CREATE VIEW Accounts_Alice AS SELECT * FROM Accounts WHERE 
+	AccountNumber = anum;
+
+-- Clerk
+CREATE VIEW Accounts_Clerk AS SELECT CustomerName, AccountNumber,
+Balance FROM Accounts;
+GRANT SELECT, UPDATE(Balance) ON TABLE Accounts_Clerk TO Clerk;
+
+-- Manager
+CREATE VIEW Accounts_Manager AS SELECT * FROM Accounts;
+GRANT INSERT, SELECT(*) ON TABLE Accounts_Manager TO Manager;
+GRANT UPDATE(CreditRating) ON TABLE Accounts_Manager TO Manager;
+\end{verbatim}
+\item
+Since a view is backed a query, and that query is being recomputed whenever the query is called, it is possible that the query contains a condition like ``salary $<$ 1000" , but the user updated the salary to, say, 2000; so the user cannot see her records anymore because the condition is violated.
+\end{enumerate}
