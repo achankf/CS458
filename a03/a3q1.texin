@@ -20,7 +20,7 @@ On Facebook, the advertisements can have prefererence, so that the ads can be se
 Since cookies are stored in the browser locally, so when the advertisement gets downloaded, the server can get and set a unique cookie, backed by a database, which can be used to distinguish people.
 \item
 {\bf [Exact match]}
-Since UW students very like use Learn, the same advertisement can be linked on Learn, except that this time Learn provides the user name of the student to the server as additional information for the cookie.
-Thus, with this additional information the university has full linkage for the students who access Facebook.
+Since UW students very likely use Learn, the same advertisement can be linked on Learn (at the same time on Facebook), such that the Learn version provides the user name of the student to the server as additional information for the cookie.
+Thus, with this additional information the university has full linkage for the students who use Learn and students who access Facebook -- in other words, we can uniquely identify the students.
 \end{itemize}
 \end{enumerate}
