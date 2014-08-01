@@ -28,34 +28,14 @@ create table disease as
 
 create table query (
 	name varchar(100),
-	gender char(1),
-	year integer,
 	telephone char(12),
+	year integer,
+	gender char(1),
 	postal char(7),
 	disease varchar(255)
 );
 
 .import Queries.csv query
-
-.output Reidentified-Data.csv
-
-select name, telephone, year, gender, postal, disease
-	from (
-		select year, gender, postal, disease
-			from disease
-			group by year, gender, postal
-			having count(*) = 1
-	)
-	inner join (
-		select name, telephone, year, gender, postal
-			from poll p
-			group by year, gender, postal
-			having count(*) = 1
-	) using(year, gender, postal)
-	order by 1,2,3,4,5,6
-;
-
-.output stdout
 
 select round(coalesce(prob,0.00),2)
 	from query
