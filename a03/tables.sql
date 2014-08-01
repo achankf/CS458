@@ -28,9 +28,9 @@ create table disease as
 
 create table query (
 	name varchar(100),
-	telephone char(12),
-	year integer,
 	gender char(1),
+	year integer,
+	telephone char(12),
 	postal char(7),
 	disease varchar(255)
 );
@@ -57,12 +57,16 @@ select name, telephone, year, gender, postal, disease
 
 .output stdout
 
-select year, gender, postal, disease, 1.0 * count(*) / total
-	from disease
-	inner join (
-select year, gender, postal, count(*) as total
-	from disease
-	group by year, gender, postal
-) using (year, gender, postal)
-	group by year, gender, postal, disease
+select round(coalesce(prob,0.00),2)
+	from query
+	left join (
+		select year, gender, postal, disease, 1.0 * count(*) / total as prob
+		from disease
+		inner join (
+			select year, gender, postal, count(*) as total
+			from disease
+			group by year, gender, postal
+		) using (year, gender, postal)
+			group by year, gender, postal, disease
+	) using (year, gender, postal, disease)
 ;
